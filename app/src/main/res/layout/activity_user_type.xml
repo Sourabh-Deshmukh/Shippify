@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.example.sourabh.shippify.sharpref">
+    -->
+
+
+
+<RelativeLayout
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:id="@+id/rl"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="316dp"
+
+        android:layout_height="52dp"
+        android:text="Continue as"
+        android:textSize="36sp"        android:layout_marginLeft="16dp"
+        android:layout_marginTop="47dp"/>
+    <RadioGroup
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/radio">
+        <RadioButton
+            android:id="@+id/rb1"
+            android:layout_width="283dp"
+            android:layout_height="wrap_content"
+            android:text="User"
+            android:textSize="24sp"
+            android:layout_marginLeft="51dp"
+            android:layout_marginTop="158dp" />
+
+
+        <RadioButton
+            android:id="@+id/rb2"
+            android:layout_width="283dp"
+            android:layout_height="wrap_content"
+            android:text="Shipping company"
+            android:textSize="24sp"        android:layout_marginLeft="51dp"
+            android:layout_marginTop="19dp" />
+
+        <RadioButton
+            android:id="@+id/rb3"
+            android:layout_width="283dp"
+            android:layout_height="wrap_content"
+            android:text="Delivery boy"
+            android:textSize="24sp"        android:layout_marginLeft="51dp"
+            android:layout_marginTop="23dp" />
+    </RadioGroup>
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="LOG OUT"
+        android:textSize="24sp"
+        android:layout_marginLeft="65dp"
+        android:layout_marginTop="330dp"
+        android:id="@+id/b"        />
+
+</RelativeLayout>
+    <!--
+    </android.support.constraint.ConstraintLayout>
+    -->
