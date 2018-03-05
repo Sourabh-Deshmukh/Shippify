@@ -9,9 +9,12 @@ import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.RadioGroup;
 import android.widget.RelativeLayout;
+import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
@@ -43,10 +46,15 @@ public class User_type extends AppCompatActivity {
     DatabaseReference myRef;
     private String MyPREFERENCES="myPref";
 
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_user_type);
+
+
+
 
         button = (Button) findViewById(R.id.b);
         radioGroup = (RadioGroup) findViewById(R.id.radio);
@@ -88,21 +96,21 @@ public class User_type extends AppCompatActivity {
                         startActivity(i);
                         break;
 
-                    case R.id.rb2:
+                  /*  case R.id.rb2:
                         editor.putString(personId, "shipping company");
                         editor.commit();
-                        /*myRef.child("User").child(personId).child("userType").setValue("shipping company");*/
+                        //myRef.child("User").child(personId).child("userType").setValue("shipping company");
                         Intent i2 = new Intent(User_type.this, Shipping_companys.class);
                         startActivity(i2);
-                        break;
+                        break;*/
 
                     case R.id.rb3:
                         editor.putString(personId, "Delivery boy");
                         editor.commit();
                         /*myRef.child("User").child(personId).child("userType").setValue("Delivery boy");*/
-                        Intent i3 = new Intent(User_type.this, Delivery_boy.class);
-                        startActivity(i3);
-                        break;
+                        Intent i2 = new Intent(User_type.this, Delivery_boy.class);
+                        startActivity(i2);
+                         break;
                 }
             }
         });
@@ -119,10 +127,10 @@ public class User_type extends AppCompatActivity {
             Intent i = new Intent(User_type.this, User.class);
             startActivity(i);
         }
-        if(s.equals("shipping company")){
+       /* if(s.equals("shipping company")){
             Intent i2 = new Intent(User_type.this, Shipping_companys.class);
             startActivity(i2);
-        }
+        }*/
         if(s.equals("Delivery boy")){
             Intent i3 = new Intent(User_type.this, Delivery_boy.class);
             startActivity(i3);

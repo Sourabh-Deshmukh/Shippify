@@ -1,17 +1,19 @@
 package com.example.sourabh.major_project;
 
-import android.content.Context;
+import android.annotation.SuppressLint;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
-import android.location.LocationManager;
+import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.view.View;
 import android.support.design.widget.NavigationView;
@@ -20,10 +22,18 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.ArrayAdapter;
+import android.widget.CompoundButton;
+import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
+import android.widget.Spinner;
+import android.widget.Switch;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -33,18 +43,18 @@ import com.google.android.gms.location.places.PlaceDetectionClient;
 import com.google.android.gms.location.places.Places;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.MapFragment;
-import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 public class Delivery_boy extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback {
@@ -59,7 +69,7 @@ private GoogleMap mMap;
     private GoogleSignInClient mGoogleSignInClient;
     private DatabaseReference mDatabase;
     FirebaseDatabase database;
-    DatabaseReference myRef;
+    static DatabaseReference myRef;
     private GeoDataClient mGeoDataClient;
     PlaceDetectionClient mPlaceDetectionClient;
     FusedLocationProviderClient mFusedLocationProviderClient;
@@ -73,70 +83,38 @@ private GoogleMap mMap;
     private static final String KEY_CAMERA_POSITION = "camera_position";
     private static final String KEY_LOCATION = "location";
     private CameraPosition mCameraPosition;
+    SupportMapFragment mapFragment;
+    double currentLatitude;
+    double currentLongitude;
+    String[] version={"Mini","PickUp","Tipper","Truck","BigTruck"};
+    int[] images={R.mipmap.mini,R.mipmap.pickup,R.mipmap.tipper,R.mipmap.truck,R.mipmap.bigtruck};
+    Spinner spin;
+    TextView t;
+    LatLng latLng;
+    public static String personId;
+    private String MyPREFERENCES="preference";
+    static final int[] i = {0};
+     ProgressBar progressBar;
+        String s="y";
+        boolean b=true;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_delivery_boy);
+
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         if (savedInstanceState != null) {
             mLastKnownLocation = savedInstanceState.getParcelable(KEY_LOCATION);
             mCameraPosition = savedInstanceState.getParcelable(KEY_CAMERA_POSITION);
         }
-        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.mapViews);
-        mapFragment.getMapAsync(this);
-/*
-    SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+        mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.mapViews);
         mapFragment.getMapAsync(this);
 
-
-        MapFragment mapView = ((MapFragment) getFragmentManager().findFragmentById(R.id.mapViews));
-      // GoogleMap mapView = ((SupportMapFragment) getSupportFragmentManager()
-        //        .findFragmentById(R.id.map)).getMap();
-        mapView.onCreate(savedInstanceState);
-        mapView.getMapAsync(new OnMapReadyCallback() {
-            @Override
-            public void onMapReady(GoogleMap googleMap) {
-                googleMap.addMarker(new MarkerOptions()
-                        .position(new LatLng(37.7750, 122.4183))
-                        .title("San Francisco")
-                        .snippet("Population: 776733"));
-            }
-        });
-
-*/
-   /*  ((SupportMapFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.mapViews)).getMapAsync(new OnMapReadyCallback() {
-
-                                                             @Override
-                                                             public void onMapReady(GoogleMap googleMap) {
-                                                                 mMap = googleMap;
-
-                                                                 // Add a marker in Sydney and move the camera
-                                                                 LatLng currentPosition = new LatLng(latitude, longitude);
-                                                                 mMap.addMarker(new MarkerOptions().position(currentPosition).title("your location"));
-                                                                 mMap.moveCamera(CameraUpdateFactory.newLatLng(currentPosition));
-                                                                 CameraPosition cameraPosition = new CameraPosition.Builder()
-                                                                         .target(new LatLng(location.getLatitude(), location.getLongitude()))      // Sets the center of the map to location user
-                                                                         .zoom(17).build();
-                                                                 mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
-                                                             }
-
-                                                         });
-
-*/
-
-         fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
@@ -147,37 +125,8 @@ private GoogleMap mMap;
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
+        progressBar=(ProgressBar)findViewById(R.id.progressBar2) ;
 
-
-/*
-        LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
-        }
-        location = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-        longitude = location.getLongitude();
-        latitude = location.getLatitude();
-
-        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
-        }
-        lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 2000, 10, locationListener);
-
-*/
 
         mAuth = FirebaseAuth.getInstance();
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
@@ -189,8 +138,11 @@ private GoogleMap mMap;
         database = FirebaseDatabase.getInstance();
         mDatabase = FirebaseDatabase.getInstance().getReference();
         myRef = database.getReferenceFromUrl("https://majorproject-e14b6.firebaseio.com/");
-
-
+        final GoogleSignInAccount acct = GoogleSignIn.getLastSignedInAccount(this);
+        if (acct != null) {
+            personId = acct.getId();
+        }
+        new performBackgroundTask().execute();
         // Construct a GeoDataClient.
         mGeoDataClient = Places.getGeoDataClient(this, null);
 
@@ -199,7 +151,68 @@ private GoogleMap mMap;
 
         // Construct a FusedLocationProviderClient.
         mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
-    }
+
+        final Switch s=(Switch)findViewById(R.id.tog_btn);
+        s.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if(isChecked){
+                    myRef.child("activeDrivers").child(personId).
+                            setValue(latLng);
+                }
+            }
+        });
+
+
+
+
+
+      /*  spin=(Spinner)findViewById(R.id.spineer1);
+
+
+        MyAdapter ad=new MyAdapter(this,version,images);
+        spin.setAdapter(ad);
+
+        spin.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener(){
+            public void onItemSelected(AdapterView<?> parent,View view,int position,long id){
+                Toast.makeText(getApplicationContext(),version[position],Toast.LENGTH_SHORT).show();
+                int x=position+1;
+
+
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+
+
+        });
+*/
+        /*SharedPreferences sharedpreferences = getSharedPreferences(MyPREFERENCES, Context.MODE_PRIVATE);
+        final SharedPreferences.Editor editor = sharedpreferences.edit();
+
+        SharedPreferences shared = getSharedPreferences(MyPREFERENCES, MODE_PRIVATE);
+        String str = (shared.getString(personId, ""));
+
+        editor.putString(i,"0");
+        editor.commit();*/
+
+
+
+//if(!personId.equals(myRef.child("truckType").child(personId).getKey()))
+        getData();
+
+}
+
+void getData(){
+
+
+
+
+}
+
+
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         if (mMap != null) {
@@ -275,6 +288,14 @@ private GoogleMap mMap;
         }
         try {
             if (mLocationPermissionGranted) {
+                View locationButton = ((View) mapFragment.getView().findViewById(Integer.parseInt("1")).
+                        getParent()).findViewById(Integer.parseInt("2"));
+                RelativeLayout.LayoutParams rlp = (RelativeLayout.LayoutParams) locationButton.getLayoutParams();
+// position on right bottom
+                rlp.addRule(RelativeLayout.ALIGN_PARENT_TOP, 0);
+                rlp.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM, RelativeLayout.TRUE);
+                rlp.setMargins(0, 0, 30, 30);
+
                 mMap.setMyLocationEnabled(true);
                 mMap.getUiSettings().setMyLocationButtonEnabled(true);
             } else {
@@ -287,6 +308,9 @@ private GoogleMap mMap;
             Log.e("Exception: %s", e.getMessage());
         }
     }
+
+
+
     private void getDeviceLocation() {
     /*
      * Get the best and most recent location of the device, which may be null in rare
@@ -301,9 +325,12 @@ private GoogleMap mMap;
                         if (task.isSuccessful()) {
                             // Set the map's camera position to the current location of the device.
                             mLastKnownLocation = (Location) task.getResult();
+                            currentLatitude = mLastKnownLocation.getLatitude();
+                            currentLongitude =mLastKnownLocation.getLongitude();
                             mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(
-                                    new LatLng(mLastKnownLocation.getLatitude(),
-                                            mLastKnownLocation.getLongitude()), DEFAULT_ZOOM));
+                                    new LatLng(currentLatitude,
+                                            currentLongitude), DEFAULT_ZOOM));
+                             latLng = new LatLng(currentLatitude, currentLongitude);
 
                         } else {
                             Log.d(TAG, "Current location is null. Using defaults.");
@@ -324,14 +351,28 @@ private GoogleMap mMap;
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
         } else {
-            super.onBackPressed();
+             return;
         }
     }
-
+/*
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.delivery_boy, menu);
+        //getMenuInflater().inflate(R.menu.activity_delivery_boy_drawer, menu);
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.activity_delivery_boy_drawer, menu);
+
+       /* MenuItem item = menu.findItem(R.id.tog);
+        item.setActionView(R.layout.app_bar_delivery_boy);
+        final Switch s=(Switch)menu.findItem(R.id.tog).getActionView().findViewById(R.id.tog_btn);
+        s.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if(isChecked){
+                    Toast.makeText(Delivery_boy.this,"dance its done",Toast.LENGTH_LONG).show();
+                }
+            }
+        });
         return true;
     }
 
@@ -341,15 +382,15 @@ private GoogleMap mMap;
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
-
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
             return true;
         }
 
+
         return super.onOptionsItemSelected(item);
     }
-
+*/
     @SuppressWarnings("StatementWithEmptyBody")
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
@@ -365,6 +406,9 @@ private GoogleMap mMap;
         } else if (id == R.id.nav_manage) {
 
         } else if (id == R.id.nav_share) {
+            Intent intent = new Intent(Intent.ACTION_VIEW);
+            intent.setData(Uri.parse("https://www.google.com"));
+            startActivity(intent);
 
         } else if (id == R.id.nav_logout) {
                     signOut();
@@ -401,19 +445,102 @@ private GoogleMap mMap;
     public void onPointerCaptureChanged(boolean hasCapture) {
 
     }
-    /**
-     * Manipulates the map once available.
-     * This callback is triggered when the map is ready to be used.
-     * This is where we can add markers or lines, add listeners or move the camera. In this case,
-     * we just add a marker near Sydney, Australia.
-     * If Google Play services is not installed on the device, the user will be prompted to install
-     * it inside the SupportMapFragment. This method will only be triggered once the user has
-     * installed Google Play services and returned to the app.
 
-    @Override
-    public void onMapReady(GoogleMap googleMap) {
+    @SuppressLint("StaticFieldLeak")
+    class performBackgroundTask extends AsyncTask<String,Integer,String> {
+        //private ProgressBar Dialog = new ProgressBar(Delivery_boy.this);
 
-    }*/
+        @Override
+        protected String doInBackground(String... params) {
+            myRef.child("truckType").addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    for (DataSnapshot child: dataSnapshot.getChildren()) {
+                        if(personId.equals(child.getKey())){
+                        //    b=false;
+                            s="n";
+                            Log.d(TAG, "onDataChange@@@@@@@@@@@@@@@@: "+child.getKey());
+                            Toast.makeText(Delivery_boy.this,"do in bC=ACKGROUND"+child.getKey(),
+                                    Toast.LENGTH_LONG).show();
+                            break;
+                        }
+                    }
+
+
+                }
+
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+
+                }
+
+
+            });
+
+            return s;
+        }
+
+        protected void onPreExecute() {
+            //  Dialog.setMessage("Please wait...");
+            // Dialog.show();
+            Toast.makeText(Delivery_boy.this,"on pre execute",Toast.LENGTH_LONG).show();
+        }
+
+        protected void onPostExecute(String unused) {
+            try {/*
+                if (Dialog.isShowing()) {
+                    Dialog.dismiss();
+
+                }*/
+                progressBar.setVisibility(View.INVISIBLE);
+                Toast.makeText(Delivery_boy.this,"on post execute",Toast.LENGTH_LONG).show();
+
+
+                if(unused.equals("y")){
+                    Log.d(TAG, "@@@@@@@@@@@@@@@@:  onstart  "+b);
+
+
+                        Log.d(TAG, "@@@@@@@@@@@@@@@@: i==00");
+                        AlertDialog.Builder mBuilder = new AlertDialog.Builder(Delivery_boy.this);
+                        View mView = getLayoutInflater().inflate(R.layout.dialog_spinner, null);
+                        mBuilder.setTitle("Choose your vehicle type");
+                        spin = (Spinner) mView.findViewById(R.id.spinner);
+                        ArrayAdapter<String> adapter = new ArrayAdapter<String>(Delivery_boy.this,
+                                android.R.layout.simple_spinner_item,
+                                getResources().getStringArray(R.array.trucktype));
+                        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                        spin.setAdapter(adapter);
+                        mBuilder.setPositiveButton("ok", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                myRef.child("truckType").child(personId).child("truckType").
+                                        setValue(spin.getSelectedItem().toString());
+                                dialog.dismiss();
+                            }
+                        });
+                        mBuilder.setNegativeButton("Dismiss", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                System.exit(1);
+
+                            }
+                        });
+                        mBuilder.setView(mView);
+                        AlertDialog a = mBuilder.create();
+                        a.show();
+
+                    }
+
+
+                // do your Display and data setting operation here
+            } catch (Exception e) {
+
+            }
+
+
+        }
+    }
 }
 
-//  android:value="@string/google_maps_key"
+
+

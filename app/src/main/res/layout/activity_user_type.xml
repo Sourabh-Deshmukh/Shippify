@@ -36,14 +36,14 @@
             android:layout_marginLeft="51dp"
             android:layout_marginTop="158dp" />
 
-
+<!--
         <RadioButton
             android:id="@+id/rb2"
             android:layout_width="283dp"
             android:layout_height="wrap_content"
             android:text="Shipping company"
             android:textSize="24sp"        android:layout_marginLeft="51dp"
-            android:layout_marginTop="19dp" />
+            android:layout_marginTop="19dp" />-->
 
         <RadioButton
             android:id="@+id/rb3"
@@ -53,6 +53,19 @@
             android:textSize="24sp"        android:layout_marginLeft="51dp"
             android:layout_marginTop="23dp" />
     </RadioGroup>
+<!--
+
+   <Spinner
+       android:layout_width="wrap_content"
+       android:layout_height="wrap_content"
+       android:layout_marginTop="300dp"
+       android:layout_marginLeft="120dp"
+       android:id="@+id/spineer1"
+       android:visibility="invisible"
+       >
+
+   </Spinner>
+-->
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
