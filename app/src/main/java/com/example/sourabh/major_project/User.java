@@ -70,6 +70,7 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -120,6 +121,7 @@ public class User extends AppCompatActivity
     private LatLng[] mLikelyPlaceLatLngs;
     PlaceAutocompleteFragment placeAutoComplete1,placeAutoComplete;
     Button b1,b2,b3,b4,b5;
+    String s;
     private String personId;
 
 
@@ -167,9 +169,13 @@ public class User extends AppCompatActivity
         mDatabase = FirebaseDatabase.getInstance().getReference();
         myRef = database.getReferenceFromUrl("https://majorproject-e14b6.firebaseio.com/");
         final GoogleSignInAccount acct = GoogleSignIn.getLastSignedInAccount(this);
-        if (acct != null) {
-            personId = acct.getId();
+        FirebaseUser currentFirebaseUser = FirebaseAuth.getInstance().getCurrentUser() ;
+        if (currentFirebaseUser != null) {
+            personId =  currentFirebaseUser.getUid();
+
         }
+
+
 
         // Construct a GeoDataClient.
         mGeoDataClient = Places.getGeoDataClient(this, null);
@@ -225,6 +231,11 @@ public class User extends AppCompatActivity
                 b3.setBackgroundColor(0);
                 b4.setBackgroundColor(0);
                 b5.setBackgroundColor(0);
+                    getlatlong("Mini");
+
+
+
+
             }
         });
         b2.setOnClickListener(new View.OnClickListener() {
@@ -235,6 +246,7 @@ public class User extends AppCompatActivity
                 b3.setBackgroundColor(0);
                 b4.setBackgroundColor(0);
                 b5.setBackgroundColor(0);
+                getlatlong("PickUp");
             }
         });
         b3.setOnClickListener(new View.OnClickListener() {
@@ -245,6 +257,7 @@ public class User extends AppCompatActivity
                 b1.setBackgroundColor(0);
                 b4.setBackgroundColor(0);
                 b5.setBackgroundColor(0);
+                getlatlong("Tipper");
             }
         });
         b4.setOnClickListener(new View.OnClickListener() {
@@ -256,6 +269,7 @@ public class User extends AppCompatActivity
                 b3.setBackgroundColor(0);
                 b1.setBackgroundColor(0);
                 b5.setBackgroundColor(0);
+                getlatlong("Truck");
             }
         });
         b5.setOnClickListener(new View.OnClickListener() {
@@ -267,23 +281,7 @@ public class User extends AppCompatActivity
                 b3.setBackgroundColor(0);
                 b4.setBackgroundColor(0);
                 b1.setBackgroundColor(0);
-
-                List<User> userList = new ArrayList<>();
-                myRef.child("activeDrivers").addValueEventListener(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(DataSnapshot dataSnapshot) {
-                        for (DataSnapshot postSnapshot: dataSnapshot.getChildren()) {
-                            Toast.makeText(User.this
-                                    , "0"+postSnapshot.child("latitude").getValue(),
-                                    Toast.LENGTH_LONG).show();
-                         }
-                    }
-
-                    @Override
-                    public void onCancelled(DatabaseError databaseError) {
-
-                    }
-                });
+                getlatlong("BigTruck");
 
             }
         });
@@ -292,6 +290,42 @@ public class User extends AppCompatActivity
 
 
     }
+
+  void getlatlong(final String trucktype){
+
+      myRef.child("activeDrivers").addValueEventListener(new ValueEventListener() {
+          @Override
+          public void onDataChange(DataSnapshot dataSnapshot) {
+              for (DataSnapshot postSnapshot: dataSnapshot.getChildren()) {
+                  if(trucktype.equals(postSnapshot.child("truckType").getValue())){
+                  Toast.makeText(User.this
+                          , "0"+ postSnapshot.child("latitude").getValue(),
+                          Toast.LENGTH_LONG).show();
+                  latitude = (double) postSnapshot.child("latitude").getValue();
+                  longitude= (double) postSnapshot.child("longitude").getValue();
+
+                      mMap.addMarker(new MarkerOptions()
+                              .position(new LatLng(latitude,longitude
+                                      ))
+                              .title(trucktype)
+                              .anchor(0.5f, 0.5f));
+
+
+                  }
+                  else{
+                 Log.d(TAG,"not found");
+                  }
+              }
+          }
+
+          @Override
+          public void onCancelled(DatabaseError databaseError) {
+
+          }
+      });
+    }
+
+
 
     protected void onSaveInstanceState(Bundle outState) {
         if (mMap != null) {

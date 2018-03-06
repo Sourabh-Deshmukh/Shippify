@@ -1,19 +1,20 @@
 package com.example.sourabh.major_project;
 
-import android.annotation.SuppressLint;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
+import android.support.v7.widget.LinearLayoutManager;
 import android.util.Log;
 import android.view.View;
 import android.support.design.widget.NavigationView;
@@ -30,7 +31,6 @@ import android.widget.RelativeLayout;
 import android.widget.Spinner;
 import android.widget.Switch;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
@@ -48,16 +48,16 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.tasks.OnCompleteListener;
+
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
+
 
 public class Delivery_boy extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback {
+        implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback, interfaceDelivery_boy {
 //private MapView mapView;
 private GoogleMap mMap;
     double latitude;
@@ -95,8 +95,11 @@ private GoogleMap mMap;
     private String MyPREFERENCES="preference";
     static final int[] i = {0};
      ProgressBar progressBar;
-        String s="y";
+        String ss="y";
         boolean b=true;
+    String s;
+
+
 
 
     @Override
@@ -125,7 +128,6 @@ private GoogleMap mMap;
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
-        progressBar=(ProgressBar)findViewById(R.id.progressBar2) ;
 
 
         mAuth = FirebaseAuth.getInstance();
@@ -139,10 +141,16 @@ private GoogleMap mMap;
         mDatabase = FirebaseDatabase.getInstance().getReference();
         myRef = database.getReferenceFromUrl("https://majorproject-e14b6.firebaseio.com/");
         final GoogleSignInAccount acct = GoogleSignIn.getLastSignedInAccount(this);
-        if (acct != null) {
-            personId = acct.getId();
+        FirebaseUser currentFirebaseUser = FirebaseAuth.getInstance().getCurrentUser() ;
+
+        if (currentFirebaseUser != null) {
+            personId = currentFirebaseUser.getUid();
+
         }
-        new performBackgroundTask().execute();
+
+
+
+      //  new performBackgroundTask().execute();
         // Construct a GeoDataClient.
         mGeoDataClient = Places.getGeoDataClient(this, null);
 
@@ -152,65 +160,85 @@ private GoogleMap mMap;
         // Construct a FusedLocationProviderClient.
         mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
 
-        final Switch s=(Switch)findViewById(R.id.tog_btn);
-        s.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+        final Switch aSwitch=(Switch)findViewById(R.id.tog_btn);
+        aSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if(isChecked){
-                    myRef.child("activeDrivers").child(personId).
-                            setValue(latLng);
+                if(isChecked){myRef.child("activeDrivers").child(personId).
+                        setValue(latLng);
+                    Log.d(TAG,"s shared preference value in switch  "+s);
+                    myRef.child("activeDrivers").child(personId).child("truckType").setValue(s);
+
+
+                }if(!isChecked){
+                    myRef.child("activeDrivers").child(personId).removeValue();
                 }
             }
         });
 
+        LinearLayoutManager linearLayoutManager=new LinearLayoutManager(this);
+}
 
-
-
-
-      /*  spin=(Spinner)findViewById(R.id.spineer1);
-
-
-        MyAdapter ad=new MyAdapter(this,version,images);
-        spin.setAdapter(ad);
-
-        spin.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener(){
-            public void onItemSelected(AdapterView<?> parent,View view,int position,long id){
-                Toast.makeText(getApplicationContext(),version[position],Toast.LENGTH_SHORT).show();
-                int x=position+1;
-
-
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-
-            }
-
-
-        });
-*/
-        /*SharedPreferences sharedpreferences = getSharedPreferences(MyPREFERENCES, Context.MODE_PRIVATE);
-        final SharedPreferences.Editor editor = sharedpreferences.edit();
-
+    @Override
+    protected void onStart() {
+        super.onStart();
         SharedPreferences shared = getSharedPreferences(MyPREFERENCES, MODE_PRIVATE);
-        String str = (shared.getString(personId, ""));
+         s= (shared.getString(personId, ""));
+         Log.d(TAG,"s shared preference value "+s);
+        if(!(s.equals("Mini")||s.equals("Pickup")||s.equals("Tipper")||s.equals("Truck")||s.equals("BigTruck"))){
+            getAlertDialog();
+        }
+    }
 
-        editor.putString(i,"0");
-        editor.commit();*/
+    void getAlertDialog(){
+        SharedPreferences sharedpreferences = getSharedPreferences(MyPREFERENCES, Context.MODE_PRIVATE);
+        final SharedPreferences.Editor  editor = sharedpreferences.edit();
+
+        AlertDialog.Builder mBuilder = new AlertDialog.Builder(Delivery_boy.this);
+        View mView = getLayoutInflater().inflate(R.layout.dialog_spinner, null);
+        mBuilder.setTitle("Choose your vehicle type");
+        spin = (Spinner) mView.findViewById(R.id.spinner);
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(Delivery_boy.this,
+                android.R.layout.simple_spinner_item,
+                getResources().getStringArray(R.array.trucktype));
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+
+        spin.setAdapter(adapter);
+        mBuilder.setPositiveButton("ok", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                //myRef.child("truckType").child(personId).child("truckType").
+                  //      setValue(spin.getSelectedItem().toString());
+                editor.putString(personId, spin.getSelectedItem().toString());
+                editor.commit();
+
+                dialog.dismiss();
+            }
+        });
+        mBuilder.setNegativeButton("Dismiss", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                System.exit(1);
+
+            }
+        });
+        mBuilder.setView(mView);
+        AlertDialog a = mBuilder.create();
+        a.show();
 
 
+    }
+    @Override
+    public void onTaskRemoved(Intent rootIntent) {
+        myRef.child("activeDrivers").child(personId).removeValue();
+    }
 
-//if(!personId.equals(myRef.child("truckType").child(personId).getKey()))
-        getData();
-
-}
-
-void getData(){
-
-
-
-
-}
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        myRef.child("activeDrivers").child(personId).removeValue();
+        this.finish();
+    }
 
 
     @Override
@@ -354,43 +382,7 @@ void getData(){
              return;
         }
     }
-/*
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        //getMenuInflater().inflate(R.menu.activity_delivery_boy_drawer, menu);
-        MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.activity_delivery_boy_drawer, menu);
 
-       /* MenuItem item = menu.findItem(R.id.tog);
-        item.setActionView(R.layout.app_bar_delivery_boy);
-        final Switch s=(Switch)menu.findItem(R.id.tog).getActionView().findViewById(R.id.tog_btn);
-        s.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if(isChecked){
-                    Toast.makeText(Delivery_boy.this,"dance its done",Toast.LENGTH_LONG).show();
-                }
-            }
-        });
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
-
-        return super.onOptionsItemSelected(item);
-    }
-*/
     @SuppressWarnings("StatementWithEmptyBody")
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
@@ -446,100 +438,6 @@ void getData(){
 
     }
 
-    @SuppressLint("StaticFieldLeak")
-    class performBackgroundTask extends AsyncTask<String,Integer,String> {
-        //private ProgressBar Dialog = new ProgressBar(Delivery_boy.this);
-
-        @Override
-        protected String doInBackground(String... params) {
-            myRef.child("truckType").addListenerForSingleValueEvent(new ValueEventListener() {
-                @Override
-                public void onDataChange(DataSnapshot dataSnapshot) {
-                    for (DataSnapshot child: dataSnapshot.getChildren()) {
-                        if(personId.equals(child.getKey())){
-                        //    b=false;
-                            s="n";
-                            Log.d(TAG, "onDataChange@@@@@@@@@@@@@@@@: "+child.getKey());
-                            Toast.makeText(Delivery_boy.this,"do in bC=ACKGROUND"+child.getKey(),
-                                    Toast.LENGTH_LONG).show();
-                            break;
-                        }
-                    }
-
-
-                }
-
-                @Override
-                public void onCancelled(DatabaseError databaseError) {
-
-                }
-
-
-            });
-
-            return s;
-        }
-
-        protected void onPreExecute() {
-            //  Dialog.setMessage("Please wait...");
-            // Dialog.show();
-            Toast.makeText(Delivery_boy.this,"on pre execute",Toast.LENGTH_LONG).show();
-        }
-
-        protected void onPostExecute(String unused) {
-            try {/*
-                if (Dialog.isShowing()) {
-                    Dialog.dismiss();
-
-                }*/
-                progressBar.setVisibility(View.INVISIBLE);
-                Toast.makeText(Delivery_boy.this,"on post execute",Toast.LENGTH_LONG).show();
-
-
-                if(unused.equals("y")){
-                    Log.d(TAG, "@@@@@@@@@@@@@@@@:  onstart  "+b);
-
-
-                        Log.d(TAG, "@@@@@@@@@@@@@@@@: i==00");
-                        AlertDialog.Builder mBuilder = new AlertDialog.Builder(Delivery_boy.this);
-                        View mView = getLayoutInflater().inflate(R.layout.dialog_spinner, null);
-                        mBuilder.setTitle("Choose your vehicle type");
-                        spin = (Spinner) mView.findViewById(R.id.spinner);
-                        ArrayAdapter<String> adapter = new ArrayAdapter<String>(Delivery_boy.this,
-                                android.R.layout.simple_spinner_item,
-                                getResources().getStringArray(R.array.trucktype));
-                        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-                        spin.setAdapter(adapter);
-                        mBuilder.setPositiveButton("ok", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                myRef.child("truckType").child(personId).child("truckType").
-                                        setValue(spin.getSelectedItem().toString());
-                                dialog.dismiss();
-                            }
-                        });
-                        mBuilder.setNegativeButton("Dismiss", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                System.exit(1);
-
-                            }
-                        });
-                        mBuilder.setView(mView);
-                        AlertDialog a = mBuilder.create();
-                        a.show();
-
-                    }
-
-
-                // do your Display and data setting operation here
-            } catch (Exception e) {
-
-            }
-
-
-        }
-    }
 }
 
 

@@ -26,17 +26,7 @@
         android:layout_height="match_parent"
         tools:context="com.example.sourabh.major_project.Users" />
 
-    <ProgressBar
-        android:id="@+id/progressBar2"
-        style="?android:attr/progressBarStyle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentEnd="true"
-        android:layout_alignParentRight="true"
-        android:layout_centerVertical="true"
-        android:layout_marginEnd="153dp"
-        android:layout_marginRight="153dp"
-        />
+
 
 </RelativeLayout>
 
