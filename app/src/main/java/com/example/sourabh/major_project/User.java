@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.graphics.drawable.Icon;
 import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
@@ -37,7 +38,9 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.HorizontalScrollView;
+import android.widget.ImageView;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
@@ -77,10 +80,13 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
+import static java.security.AccessController.getContext;
 
 public class User extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks,
@@ -123,7 +129,10 @@ public class User extends AppCompatActivity
     Button b1,b2,b3,b4,b5;
     String s;
     private String personId;
-
+    private MarkerOptions options;
+    private ArrayList<LatLng> latlngs;
+    ImageView imageView;
+    TextView textView1,textView0;
 
     @SuppressLint("WrongConstant")
     @Override
@@ -144,11 +153,17 @@ public class User extends AppCompatActivity
         navigationView.setNavigationItemSelectedListener(this);
 
 
+        View headerView = navigationView.getHeaderView(0);
+        textView0=(TextView) headerView.findViewById(R.id.t1);
+        textView1=(TextView) headerView.findViewById(R.id.textView);
+        imageView=(ImageView)headerView.findViewById(R.id.imageView);
 
 
 
 
-          SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.maps);
+
+
+        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.maps);
         mapFragment.getMapAsync(this);
         if (savedInstanceState != null) {
             mLastKnownLocation = savedInstanceState.getParcelable(KEY_LOCATION);
@@ -173,6 +188,12 @@ public class User extends AppCompatActivity
         if (currentFirebaseUser != null) {
             personId =  currentFirebaseUser.getUid();
 
+        }
+        if(acct !=null){
+            Log.d(TAG, "onCreate: "+acct);
+            textView0.setText(acct.getGivenName());
+            textView1.setText(acct.getEmail());
+            Picasso.with(User.this).load(acct.getPhotoUrl()).fit().into(imageView);
         }
 
 
@@ -213,6 +234,12 @@ public class User extends AppCompatActivity
                 Log.d("Maps", "An error occurred: " + status);
             }
         });
+
+        options = new MarkerOptions();
+        latlngs = new ArrayList<>();
+
+
+
         placeAutoComplete.getView().setBackgroundColor(Color.WHITE);
         placeAutoComplete1.getView().setBackgroundColor(Color.WHITE);
         // Build the map.h
@@ -285,39 +312,37 @@ public class User extends AppCompatActivity
 
             }
         });
-
-
-
-
     }
 
   void getlatlong(final String trucktype){
-
+      latlngs.clear();
+      mMap.clear();
       myRef.child("activeDrivers").addValueEventListener(new ValueEventListener() {
           @Override
           public void onDataChange(DataSnapshot dataSnapshot) {
               for (DataSnapshot postSnapshot: dataSnapshot.getChildren()) {
                   if(trucktype.equals(postSnapshot.child("truckType").getValue())){
-                  Toast.makeText(User.this
-                          , "0"+ postSnapshot.child("latitude").getValue(),
-                          Toast.LENGTH_LONG).show();
+
                   latitude = (double) postSnapshot.child("latitude").getValue();
                   longitude= (double) postSnapshot.child("longitude").getValue();
 
-                      mMap.addMarker(new MarkerOptions()
-                              .position(new LatLng(latitude,longitude
-                                      ))
-                              .title(trucktype)
-                              .anchor(0.5f, 0.5f));
-
-
+                  latlngs.add(new LatLng(latitude, longitude));
                   }
                   else{
                  Log.d(TAG,"not found");
                   }
               }
+              addMarker(trucktype);
           }
 
+          void addMarker(String trucktype){
+              for (LatLng point : latlngs) {
+                  options.position(point);
+                  options.title(trucktype);
+                  options.snippet("vehicle type");
+                  mMap.addMarker(options);
+              }
+          }
           @Override
           public void onCancelled(DatabaseError databaseError) {
 

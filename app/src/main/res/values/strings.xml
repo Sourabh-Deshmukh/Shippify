@@ -22,8 +22,8 @@
     <string-array name="trucktype">
         <item>Mini</item>
         <item>Pickup</item>
-        <item>tipper</item>
-        <item>truck</item>
-        <item>bigtruck</item>
+        <item>Tipper</item>
+        <item>Truck</item>
+        <item>BigTruck</item>
     </string-array>
 </resources>

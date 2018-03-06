@@ -5,11 +5,17 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.Icon;
 import android.location.Location;
 import android.location.LocationListener;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.annotation.RequiresApi;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -26,6 +32,7 @@ import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 import android.widget.ArrayAdapter;
 import android.widget.CompoundButton;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.Spinner;
@@ -54,6 +61,11 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.squareup.picasso.Picasso;
+
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 
 public class Delivery_boy extends AppCompatActivity
@@ -98,10 +110,12 @@ private GoogleMap mMap;
         String ss="y";
         boolean b=true;
     String s;
+    ImageView imageView;
+    TextView textView1,textView0;
 
 
 
-
+    @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
@@ -128,6 +142,10 @@ private GoogleMap mMap;
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
+        View headerView = navigationView.getHeaderView(0);
+        textView0=(TextView) headerView.findViewById(R.id.tv1);
+        textView1=(TextView) headerView.findViewById(R.id.textView);
+        imageView=(ImageView)headerView.findViewById(R.id.imageView);
 
 
         mAuth = FirebaseAuth.getInstance();
@@ -148,7 +166,23 @@ private GoogleMap mMap;
 
         }
 
+        if(acct !=null){
+            Log.d(TAG, "onCreate: "+acct.getPhotoUrl());
+            textView0.setText(acct.getGivenName());
+            textView1.setText(acct.getEmail());
 
+            //Bitmap bitmap = BitmapFactory.decodeFile(acct.getPhotoUrl().getPath());
+            //imageView.setImageBitmap(bitmap);
+
+            //Drawable d = Drawable.createFromPath(String.valueOf(acct.getPhotoUrl().getPath()));
+            //imageView.setImageDrawable(d);
+            //imageView.refreshDrawableState();
+
+           // imageView.setImageIcon(Icon.createWithContentUri(acct.getPhotoUrl()));
+            Bitmap bb=getBitmapfromUrl(String.valueOf(acct.getPhotoUrl()));
+            imageView.setImageBitmap(bb);
+            //Picasso.with(Delivery_boy.this).load(acct.getPhotoUrl()).resizeDimen(14,14).into(imageView);
+        }
 
       //  new performBackgroundTask().execute();
         // Construct a GeoDataClient.
@@ -178,7 +212,26 @@ private GoogleMap mMap;
 
         LinearLayoutManager linearLayoutManager=new LinearLayoutManager(this);
 }
+    public Bitmap getBitmapfromUrl(String imageUrl)
+    {
+        try
+        {
+            URL url = new URL(imageUrl);
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setDoInput(true);
+            connection.connect();
+            InputStream input = connection.getInputStream();
+            Bitmap bitmap = BitmapFactory.decodeStream(input);
+            return bitmap;
 
+        } catch (Exception e)
+        {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+            return null;
+
+        }
+    }
     @Override
     protected void onStart() {
         super.onStart();
