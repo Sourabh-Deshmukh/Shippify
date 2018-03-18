@@ -1,7 +1,9 @@
 package com.example.sourabh.major_project;
 
 import android.annotation.SuppressLint;
+import static android.provider.Settings.System.AIRPLANE_MODE_ON;
 import android.content.ClipData;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -15,6 +17,9 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.provider.Settings;
 import android.provider.SyncStateContract;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -43,6 +48,8 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
@@ -82,6 +89,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.squareup.picasso.Picasso;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -126,13 +134,19 @@ public class User extends AppCompatActivity
     private String[] mLikelyPlaceAttributions;
     private LatLng[] mLikelyPlaceLatLngs;
     PlaceAutocompleteFragment placeAutoComplete1,placeAutoComplete;
-    Button b1,b2,b3,b4,b5;
+    Button b1,b2,b3,b4,b5,b;
     String s;
-    private String personId;
+    private String personId,truckType;
     private MarkerOptions options;
     private ArrayList<LatLng> latlngs;
     ImageView imageView;
     TextView textView1,textView0;
+    double sum=0;
+     GoogleSignInAccount acct;
+    double d=0,count=0;
+
+    private LatLng lagg,Dlag,lg;
+    private String add,Dadd;
 
     @SuppressLint("WrongConstant")
     @Override
@@ -183,7 +197,7 @@ public class User extends AppCompatActivity
         database = FirebaseDatabase.getInstance();
         mDatabase = FirebaseDatabase.getInstance().getReference();
         myRef = database.getReferenceFromUrl("https://majorproject-e14b6.firebaseio.com/");
-        final GoogleSignInAccount acct = GoogleSignIn.getLastSignedInAccount(this);
+        acct = GoogleSignIn.getLastSignedInAccount(this);
         FirebaseUser currentFirebaseUser = FirebaseAuth.getInstance().getCurrentUser() ;
         if (currentFirebaseUser != null) {
             personId =  currentFirebaseUser.getUid();
@@ -193,7 +207,12 @@ public class User extends AppCompatActivity
             Log.d(TAG, "onCreate: "+acct);
             textView0.setText(acct.getGivenName());
             textView1.setText(acct.getEmail());
-            Picasso.with(User.this).load(acct.getPhotoUrl()).fit().into(imageView);
+            Log.d(TAG, "onCreate: "+acct.getPhotoUrl());
+           Glide.with(User.this).load(acct.getPhotoUrl().toString())
+            .thumbnail(0.5f)
+            .crossFade()
+            .diskCacheStrategy(DiskCacheStrategy.ALL)
+            .into(imageView);
         }
 
 
@@ -214,6 +233,9 @@ public class User extends AppCompatActivity
             @Override
             public void onPlaceSelected(Place place) {
                 Log.d("Maps", "Place selected: " + place.getName());
+                Dlag=place.getLatLng();
+                Dadd=place.getAddress().toString();
+                getFare();
             }
 
             @Override
@@ -227,6 +249,8 @@ public class User extends AppCompatActivity
             @Override
             public void onPlaceSelected(Place place) {
                 Log.d("Maps", "Place selected: " + place.getName());
+                lagg=place.getLatLng();
+                add=place.getAddress().toString();
             }
 
             @Override
@@ -249,71 +273,162 @@ public class User extends AppCompatActivity
         b3=(Button)findViewById(R.id.button3);
         b4=(Button)findViewById(R.id.button4);
         b5=(Button)findViewById(R.id.button5);
+        b=(Button)findViewById(R.id.button);
 
         b1.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                sum=0;
                 b1.setBackgroundResource(R.color.colorPrimary);
                 b2.setBackgroundColor(0);
                 b3.setBackgroundColor(0);
                 b4.setBackgroundColor(0);
                 b5.setBackgroundColor(0);
-                    getlatlong("Mini");
-
-
-
-
+                count=1;
+                sum=0;
+                sum+=100;
+                truckType="";
+                truckType="Mini";
+                getlatlong("Mini");
             }
         });
         b2.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                sum=0;
                 b2.setBackgroundResource(R.color.colorPrimary);
                 b1.setBackgroundColor(0);
                 b3.setBackgroundColor(0);
                 b4.setBackgroundColor(0);
                 b5.setBackgroundColor(0);
-                getlatlong("PickUp");
+                count=1;
+
+                truckType="";
+                truckType="Pickup";
+
+                sum=0;
+                sum+=200;
+                getlatlong("Pickup");
             }
         });
         b3.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                sum=0;
                 b3.setBackgroundResource(R.color.colorPrimary);
                 b2.setBackgroundColor(0);
                 b1.setBackgroundColor(0);
                 b4.setBackgroundColor(0);
                 b5.setBackgroundColor(0);
+                count=1;
+
+                truckType="";
+                truckType="Tipper";
+                sum=0;
+                sum+=300;
                 getlatlong("Tipper");
             }
         });
         b4.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                sum=0;
                 b4.setBackgroundResource(R.color.colorPrimary);
-
                 b2.setBackgroundColor(0);
                 b3.setBackgroundColor(0);
                 b1.setBackgroundColor(0);
                 b5.setBackgroundColor(0);
+                truckType="";
+                truckType="Truck";
+                sum=0;
+                sum+=400;
                 getlatlong("Truck");
             }
         });
         b5.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                sum=0;
                 b5.setBackgroundResource(R.color.colorPrimary);
-
                 b2.setBackgroundColor(0);
                 b3.setBackgroundColor(0);
                 b4.setBackgroundColor(0);
                 b1.setBackgroundColor(0);
+                truckType="";
+                truckType="BigTruck";
+                sum=0;
+                sum+=500;
                 getlatlong("BigTruck");
-
             }
+        });
+         b.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(count==1&&d!=0){
+                    Intent in = new Intent(getApplicationContext(), CardViewActivity.class);
+                    in.putExtra("distance",d);
+                    in.putExtra("costSum",sum);
+                    in.putExtra("truckType",truckType);
+                    in.putExtra("origin",lagg);
+                    in.putExtra("destination",Dlag);
+                    in.putExtra("place",add);
+                    in.putExtra("place1",Dadd);
+                    startActivity(in);
+                }
+                else{
+                    Toast.makeText(User.this,"Select value ",Toast.LENGTH_LONG).show();
+                }
+                }
         });
     }
 
+    public void getFare()
+    {
+        Log.e("get","fare");
+        try{
+            mMap.addMarker(new MarkerOptions().position(Dlag).title(Dadd));
+            mMap.addMarker(new MarkerOptions().position(lagg).title(add));
+//            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(Dlag,15));
+            if(lagg==null)
+                lagg=lg;
+            d =CalculationByDistance(lagg,Dlag);
+            String s=Double.toString(d);
+            Log.d(TAG, "getFare: "+s);
+            //TextView t=(TextView)findViewById(R.id.setDistence);
+            //t.setText(s);
+             Toast toast=Toast.makeText(getApplicationContext(),""+d,Toast.LENGTH_SHORT); toast.setMargin(50,50);
+        }catch(Exception e)
+        {
+            String msg="Exception";
+            Log.d(msg,e.getMessage());
+        }
+
+    }
+    public double CalculationByDistance(LatLng StartP, LatLng EndP) {
+        Log.e("get","Calc");
+        int Radius = 6371;// radius of earth in Km
+        double lat1 = StartP.latitude;
+        double lat2 = EndP.latitude;
+        double lon1 = StartP.longitude;
+        double lon2 = EndP.longitude;
+        double dLat = Math.toRadians(lat2 - lat1);
+        double dLon = Math.toRadians(lon2 - lon1);
+        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
+                + Math.cos(Math.toRadians(lat1))
+                * Math.cos(Math.toRadians(lat2)) * Math.sin(dLon / 2)
+                * Math.sin(dLon / 2);
+        double c = 2 * Math.asin(Math.sqrt(a));
+        double valueResult = Radius * c;
+        double km = valueResult / 1;
+        DecimalFormat newFormat = new DecimalFormat("####");
+        int kmInDec = Integer.valueOf(newFormat.format(km));
+        double meter = valueResult % 1000;
+        int meterInDec = Integer.valueOf(newFormat.format(meter));
+        Log.i("Radius Value", "" + valueResult + "   KM  " + kmInDec
+                + " Meter   " + meterInDec);
+
+        return Radius * c;
+    }
   void getlatlong(final String trucktype){
       latlngs.clear();
       mMap.clear();
@@ -339,7 +454,7 @@ public class User extends AppCompatActivity
               for (LatLng point : latlngs) {
                   options.position(point);
                   options.title(trucktype);
-                  options.snippet("vehicle type");
+                  options.snippet(" "+acct.getDisplayName());
                   mMap.addMarker(options);
               }
           }

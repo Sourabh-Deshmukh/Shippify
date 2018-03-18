@@ -11,12 +11,14 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <com.google.android.gms.maps.MapView
-        android:id="@+id/mapView"
+    <fragment xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:id="@+id/mapps"
+        android:name="com.google.android.gms.maps.SupportMapFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:visibility="visible"
-        tools:layout_editor_absoluteX="161dp"
-        tools:layout_editor_absoluteY="171dp" />
+
+        tools:context="com.example.sourabh.major_project.User"
+        />
 </RelativeLayout>
 </android.support.constraint.ConstraintLayout>

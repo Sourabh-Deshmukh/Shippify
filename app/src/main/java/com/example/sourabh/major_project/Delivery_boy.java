@@ -7,13 +7,12 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.drawable.Drawable;
-import android.graphics.drawable.Icon;
 import android.location.Location;
 import android.location.LocationListener;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.RequiresApi;
 import android.support.design.widget.FloatingActionButton;
@@ -39,6 +38,8 @@ import android.widget.Spinner;
 import android.widget.Switch;
 import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
@@ -61,7 +62,6 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.squareup.picasso.Picasso;
 
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -112,6 +112,8 @@ private GoogleMap mMap;
     String s;
     ImageView imageView;
     TextView textView1,textView0;
+    Handler handler;
+    Runnable runnable;
 
 
 
@@ -170,18 +172,12 @@ private GoogleMap mMap;
             Log.d(TAG, "onCreate: "+acct.getPhotoUrl());
             textView0.setText(acct.getGivenName());
             textView1.setText(acct.getEmail());
+            Glide.with(Delivery_boy.this).load(acct.getPhotoUrl().toString())
+                    .thumbnail(0.5f)
+                    .crossFade()
+                    .diskCacheStrategy(DiskCacheStrategy.ALL)
+                    .into(imageView);
 
-            //Bitmap bitmap = BitmapFactory.decodeFile(acct.getPhotoUrl().getPath());
-            //imageView.setImageBitmap(bitmap);
-
-            //Drawable d = Drawable.createFromPath(String.valueOf(acct.getPhotoUrl().getPath()));
-            //imageView.setImageDrawable(d);
-            //imageView.refreshDrawableState();
-
-           // imageView.setImageIcon(Icon.createWithContentUri(acct.getPhotoUrl()));
-            Bitmap bb=getBitmapfromUrl(String.valueOf(acct.getPhotoUrl()));
-            imageView.setImageBitmap(bb);
-            //Picasso.with(Delivery_boy.this).load(acct.getPhotoUrl()).resizeDimen(14,14).into(imageView);
         }
 
       //  new performBackgroundTask().execute();
@@ -198,14 +194,38 @@ private GoogleMap mMap;
         aSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if(isChecked){myRef.child("activeDrivers").child(personId).
-                        setValue(latLng);
-                    Log.d(TAG,"s shared preference value in switch  "+s);
-                    myRef.child("activeDrivers").child(personId).child("truckType").setValue(s);
+                if(isChecked){
 
+                     handler = new Handler();
+                   final int delay = 20000; //milliseconds
+                    runnable=new Runnable(){
+                        public void run(){
+
+                            myRef.child("activeDrivers").child(personId).child("latitude").setValue(currentLatitude);
+                            myRef.child("activeDrivers").child(personId).child("longitude").setValue(currentLongitude);
+                            Log.d(TAG,"s shared preference value in switch  "+s);
+                            myRef.child("activeDrivers").child(personId).child("truckType").setValue(s);
+                            myRef.child("activeDrivers").child(personId).child("Name").setValue(acct.getDisplayName());
+                            myRef.child("activeDrivers").child(personId).child("PhotoUrl").setValue(acct.getPhotoUrl().toString());
+                            handler.postDelayed(this, delay);
+                        }
+                    };
+                    handler.postDelayed(runnable, delay);
+
+//                     handler = new Handler();
+//                     runnable = new Runnable() {
+//                        public void run() {
+//                            myRef.child("activeDrivers").child(personId).setValue(latLng);
+//                            Log.d(TAG,"s shared preference value in switch  "+s);
+//                            myRef.child("activeDrivers").child(personId).child("truckType").setValue(s);
+//
+//                            handler.postDelayed(this, delay);
+//                        }
+//                    };
 
                 }if(!isChecked){
                     myRef.child("activeDrivers").child(personId).removeValue();
+                    handler.removeCallbacks(runnable);
                 }
             }
         });
@@ -232,6 +252,10 @@ private GoogleMap mMap;
 
         }
     }
+
+
+
+
     @Override
     protected void onStart() {
         super.onStart();
@@ -444,6 +468,8 @@ private GoogleMap mMap;
 
         if (id == R.id.nav_camera) {
             // Handle the camera action
+            Intent iiii= new Intent(Delivery_boy.this,d_CardViewActivity.class);
+            startActivity(iiii);
         } else if (id == R.id.nav_gallery) {
 
         } else if (id == R.id.nav_slideshow) {
